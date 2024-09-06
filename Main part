@@ -1,0 +1,89 @@
+PROBLEM STATEMENT:
+
+Display the total salary spent by each department from emp.txt file using MR program.
+
+DATASETS(INPUT):
+
+John 12345 123_Main_Street_Anytown CA USA john.doe@example.com +1-555
+123-4567 IT 80000 
+Jane 67890 456_Oak_Avenue_Othercity NY USA jane.smith@example.com +1-555
+987-6543 HR 65000 
+Michael 24680 789_Elm_Road_Anothercity TX USA michael.b@example.com +1
+555-567-8901 Finance 90000 
+Sarah 13579 321_Pine_Lane_Nearbytown FL USA sarah.j@example.com +1-555-234
+5678 Marketing 75000 
+Kevin 98765 555_Cedar_Street_Farawaycity WA USA kevin.lee@example.com +1
+555-876-5432 IT 85000 
+Emily 54321 789_Birch_Avenue_Distantcity IL USA emily.d@example.com +1-555
+345-6789 Operations 70000 
+Alex 11223 101_Maple_Lane_Nearbyville CA USA alex.turner@example.com +1-555
+654-3210 Sales 95000 
+Olivia 99887 876_Redwood_Road_Metrocity GA USA olivia.white@example.com +1
+555-432-1098 CustomerSupport 72000 
+David 33445 222_Spruce_Street_Suburbantown MA USA david.miller@example.com 
++1-555-789-0123 Research 88000 
+Sophia 77665 444_Oakwood_Lane_Coastalcity CA USA sophia.chang@example.com 
++1-555-210-9876 IT 78000
+
+CODE:
+import java.io.IOException; 
+import java.util.StringTokenizer; 
+import org.apache.hadoop.conf.Configuration; 
+import org.apache.hadoop.fs.Path; 
+import org.apache.hadoop.io.IntWritable; 
+import org.apache.hadoop.io.Text; 
+import org.apache.hadoop.mapreduce.Job; 
+import org.apache.hadoop.mapreduce.Mapper; 
+import org.apache.hadoop.mapreduce.Reducer; 
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat; 
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat; 
+ 
+public class W_5i_22MIS1047 { 
+ 
+  public static class TokenizerMapper 
+       extends Mapper<Object, Text, Text, IntWritable>{ 
+ 
+    private IntWritable valueCount = new IntWritable(); 
+    private Text word = new Text(); 
+ 
+    public void map(Object key, Text value, Context context 
+                    ) throws IOException, InterruptedException { 
+      String line = value.toString(); 
+      String[] tokens = line.split(" "); 
+      word.set(tokens[7]); 
+      valueCount.set(Integer.parseInt(tokens[8])); 
+      context.write(word, valueCount); 
+    } 
+  } 
+ 
+  public static class IntSumReducer 
+       extends Reducer<Text,IntWritable,Text,IntWritable> { 
+    private IntWritable result = new IntWritable(); 
+ 
+    public void reduce(Text key, Iterable<IntWritable> values, 
+                       Context context 
+                       ) throws IOException, InterruptedException { 
+      int sum = 0; 
+      for (IntWritable val : values) { 
+        sum += val.get(); 
+      } 
+      result.set(sum); 
+      context.write(key, result); 
+    } 
+  } 
+ 
+  public static void main(String[] args) throws Exception { 
+    Configuration conf = new Configuration(); 
+    Job job = new Job(conf, "word count"); 
+    job.setJarByClass(W_5i_22MIS1047.class); 
+    job.setMapperClass(TokenizerMapper.class); 
+    job.setCombinerClass(IntSumReducer.class); 
+    job.setReducerClass(IntSumReducer.class); 
+    job.setOutputKeyClass(Text.class); 
+    job.setOutputValueClass(IntWritable.class); 
+    FileInputFormat.addInputPath(job, new Path(args[0])); 
+    FileOutputFormat.setOutputPath(job, new Path(args[1])); 
+    System.exit(job.waitForCompletion(true) ? 0 : 1); 
+  } 
+}
+
